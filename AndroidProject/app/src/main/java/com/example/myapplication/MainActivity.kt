@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupStream() {
         lifecycleScope.launch {
             binding.logText.text = "Ligando câmera do óculos em background..."
-            session?.addStream(StreamConfiguration(videoQuality = VideoQuality.MEDIUM))
+            session?.addStream(StreamConfiguration(videoQuality = VideoQuality.HIGH, frameRate = 2))
                 ?.onSuccess { addedStream ->
                     stream = addedStream
                     stream?.start()
@@ -252,7 +252,7 @@ class MainActivity : AppCompatActivity() {
         return try {
             val file = File(externalCacheDir, "glasses_capture.jpg")
             FileOutputStream(file).use { out ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
             }
             file
         } catch (e: Exception) {

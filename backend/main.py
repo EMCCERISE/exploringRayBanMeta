@@ -35,30 +35,39 @@ def get_db():
     finally:
         db.close()
 
-LMSTUDIO_API_URL = "http://localhost:1234/v1"
+from faster_whisper import WhisperModel
 
-def transcribe_audio_lmstudio(audio_path: str) -> str:
+# Inicializa o modelo de STT globalmente (fica na memória)
+try:
+    print("Carregando WhisperModel (small)...")
+    whisper_model = WhisperModel("small", device="cuda", compute_type="float16")
+    print("WhisperModel carregado com sucesso na GPU!")
+except Exception as e:
+    print(f"Aviso: Falha ao carregar Whisper na GPU. Tentando CPU... Erro: {e}")
+    whisper_model = WhisperModel("small", device="cpu", compute_type="int8")
+    print("WhisperModel carregado na CPU!")
+
+def transcribe_audio_whisper(audio_path: str) -> str:
     """
-    Tenta usar o endpoint do LMStudio (padrão OpenAI) para transcrição.
-    Caso o LMStudio não suporte STT nativamente, esta função pode precisar ser 
-    adaptada para usar Whisper localmente (ex: biblioteca 'whisper').
+    Usa o faster-whisper carregado na memória para transcrição super rápida.
     """
-    url = f"{LMSTUDIO_API_URL}/audio/transcriptions"
-    
+    global whisper_model
     try:
-        with open(audio_path, "rb") as f:
-            files = {"file": (os.path.basename(audio_path), f, "audio/wav")}
-            data = {"model": "local-model"} # Modelo não importa muito para LMStudio local
-            response = requests.post(url, files=files, data=data, timeout=30)
-            
-        if response.status_code == 200:
-            return response.json().get("text", "")
-        else:
-            print(f"Erro no LMStudio: {response.text}")
-            return f"Erro na transcrição: {response.status_code}"
+        # language="pt" força reconhecimento em português (remova se quiser auto-detect)
+        segments, info = whisper_model.transcribe(audio_path, beam_size=5, language="pt")
+        return " ".join([segment.text for segment in segments]).strip()
     except Exception as e:
-        print(f"Exceção ao conectar no LMStudio: {e}")
-        return "Erro: não foi possível conectar ao LMStudio."
+        print(f"Erro na transcrição via Whisper: {e}")
+        if "cublas" in str(e).lower() or "cudnn" in str(e).lower() or "cuda" in str(e).lower():
+            print("⚠️ DLLs da GPU (CUDA) não encontradas no Windows! Trocando para CPU (modo de segurança)...")
+            try:
+                whisper_model = WhisperModel("small", device="cpu", compute_type="int8")
+                segments, info = whisper_model.transcribe(audio_path, beam_size=5, language="pt")
+                return " ".join([segment.text for segment in segments]).strip()
+            except Exception as cpu_e:
+                print(f"Erro na transcrição via CPU: {cpu_e}")
+        
+        return "Erro: não foi possível transcrever o áudio."
 
 @app.post("/upload", response_model=schemas.LogEntry)
 async def upload_data(
@@ -79,8 +88,8 @@ async def upload_data(
     with open(audio_path, "wb") as buffer:
         shutil.copyfileobj(audio.file, buffer)
 
-    # 3. Transcrever áudio
-    transcript = transcribe_audio_lmstudio(audio_path)
+    # 3. Transcrever áudio via Whisper
+    transcript = transcribe_audio_whisper(audio_path)
     
     # (Opcional) apagar o áudio depois se não quiser guardar
     # os.remove(audio_path)
