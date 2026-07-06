@@ -5,8 +5,10 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
+import android.media.AudioManager
 import android.media.MediaRecorder
 import android.os.Bundle
+import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -39,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private var isRecording = false
     private var mediaRecorder: MediaRecorder? = null
+    private var audioManager: AudioManager? = null
     private var audioFilePath: String = ""
 
     // IP do Backend 
@@ -79,6 +82,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         audioFilePath = "${externalCacheDir?.absolutePath}/test_audio.wav"
 
         checkPermissions()
@@ -184,7 +188,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startRecording() {
-        binding.logText.text = "Gravando áudio..."
+        binding.logText.text = "Conectando microfone do óculos..."
+        
+        // Ativa o roteamento de áudio via Bluetooth (Headset)
+        audioManager?.startBluetoothSco()
+        audioManager?.isBluetoothScoOn = true
+
         binding.btnCapture.text = "PARAR\nE ENVIAR"
         binding.btnCapture.setBackgroundColor(android.graphics.Color.RED)
         
@@ -206,6 +215,10 @@ class MainActivity : AppCompatActivity() {
         }
         mediaRecorder = null
         isRecording = false
+        
+        // Desliga o roteamento do Bluetooth para voltar ao normal
+        audioManager?.stopBluetoothSco()
+        audioManager?.isBluetoothScoOn = false
         
         binding.btnCapture.text = "INICIAR\nGRAVAÇÃO"
         binding.btnCapture.setBackgroundColor(android.graphics.Color.parseColor("#3b82f6"))
