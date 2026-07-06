@@ -48,6 +48,12 @@ dependencies {
     implementation("com.meta.wearable:mwdat-core:0.8.0")
     implementation("com.meta.wearable:mwdat-camera:0.8.0")
     
+    // ExifInterface for HEIC orientation fixes
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
+    
+    // Coroutines lifecycle
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
