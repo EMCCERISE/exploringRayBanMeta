@@ -1,6 +1,7 @@
 import os
 import shutil
 import requests
+import time
 from fastapi import FastAPI, UploadFile, File, Form, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -76,14 +77,16 @@ async def upload_data(
     audio: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+    timestamp = int(time.time() * 1000)
+    
     # 1. Salvar imagem
-    image_filename = f"{glasses_id}_{image.filename}"
+    image_filename = f"{glasses_id}_{timestamp}_{image.filename}"
     image_path = os.path.join(UPLOAD_DIR, image_filename)
     with open(image_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
 
     # 2. Salvar áudio temporariamente
-    audio_filename = f"{glasses_id}_{audio.filename}"
+    audio_filename = f"{glasses_id}_{timestamp}_{audio.filename}"
     audio_path = os.path.join(UPLOAD_DIR, audio_filename)
     with open(audio_path, "wb") as buffer:
         shutil.copyfileobj(audio.file, buffer)

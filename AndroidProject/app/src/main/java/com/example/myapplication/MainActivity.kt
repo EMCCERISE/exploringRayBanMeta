@@ -28,6 +28,8 @@ import com.meta.wearable.dat.core.session.DeviceSession
 import com.meta.wearable.dat.core.types.Permission
 import com.meta.wearable.dat.core.types.PermissionStatus
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
+import kotlinx.coroutines.Deferred
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -43,6 +45,7 @@ class MainActivity : AppCompatActivity() {
     private var mediaRecorder: MediaRecorder? = null
     private var audioManager: AudioManager? = null
     private var audioFilePath: String = ""
+    private var photoCaptureJob: Deferred<File?>? = null
 
     // IP do Backend 
     private val BACKEND_URL = "http://192.168.15.9:8000/upload"
@@ -188,15 +191,29 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startRecording() {
-        binding.logText.text = "Conectando microfone do óculos..."
+        binding.logText.text = "📸 Capturando visão e conectando microfone..."
         
-        // Ativa o roteamento de áudio via Bluetooth (Headset)
+        // 1. Inicia a captura da foto imediatamente (em background)
+        photoCaptureJob = lifecycleScope.async {
+            if (stream == null) return@async null
+            val result = stream?.capturePhoto()
+            val photoData = result?.getOrNull()
+            if (photoData != null) {
+                processPhotoData(photoData)
+            } else {
+                Log.e("MainActivity", "Falha ao capturar a foto do stream")
+                null
+            }
+        }
+        
+        // 2. Ativa o roteamento de áudio via Bluetooth (Headset)
         audioManager?.startBluetoothSco()
         audioManager?.isBluetoothScoOn = true
 
         binding.btnCapture.text = "PARAR\nE ENVIAR"
         binding.btnCapture.setBackgroundColor(android.graphics.Color.RED)
         
+        // 3. Inicia a gravação de áudio
         mediaRecorder = MediaRecorder().apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
@@ -223,29 +240,18 @@ class MainActivity : AppCompatActivity() {
         binding.btnCapture.text = "INICIAR\nGRAVAÇÃO"
         binding.btnCapture.setBackgroundColor(android.graphics.Color.parseColor("#3b82f6"))
         
-        if (stream == null) {
-            binding.logText.text = "Erro: Câmera do óculos não está pronta. Criando fallback dummy."
-            val dummy = createDummyImage()
-            sendDataToBackend(dummy, File(audioFilePath))
-            return
-        }
-
-        binding.logText.text = "📸 Tirando foto pelo Ray-Ban Meta..."
+        binding.logText.text = "Processando arquivo e enviando ao servidor..."
         
         lifecycleScope.launch {
-            stream?.capturePhoto()
-                ?.onSuccess { photoData ->
-                    binding.logText.text = "Foto capturada! Processando e enviando..."
-                    val photoFile = processPhotoData(photoData)
-                    if (photoFile != null) {
-                        sendDataToBackend(photoFile, File(audioFilePath))
-                    } else {
-                        binding.logText.text = "Falha ao processar arquivo da foto."
-                    }
-                }
-                ?.onFailure { error, _ ->
-                    binding.logText.text = "Erro ao tirar foto: ${error.description}"
-                }
+            // Aguarda a foto terminar de processar (caso você tenha parado a gravação muito rápido)
+            val photoFile = photoCaptureJob?.await()
+            
+            if (photoFile != null) {
+                sendDataToBackend(photoFile, File(audioFilePath))
+            } else {
+                binding.logText.text = "Erro: Câmera falhou. Usando dummy fallback."
+                sendDataToBackend(createDummyImage(), File(audioFilePath))
+            }
         }
     }
 
