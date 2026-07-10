@@ -86,8 +86,8 @@ class MainActivity : AppCompatActivity() {
         checkPermissions()
 
         // Ajusta o botão para Iniciar/Parar Stream
-        binding.btnStream.text = "INICIAR\nSTREAM"
-        binding.btnStream.setBackgroundColor(android.graphics.Color.parseColor("#3b82f6"))
+        binding.btnStream.text = "INICIAR STREAM"
+        binding.btnStream.setBackgroundColor(android.graphics.Color.parseColor("#4F46E5"))
 
         binding.btnStream.setOnClickListener {
             if (isStreaming) {
@@ -199,8 +199,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
         isStreaming = true
-        binding.btnStream.text = "PARAR\nSTREAM"
-        binding.btnStream.setBackgroundColor(android.graphics.Color.RED)
+        binding.btnStream.text = "PARAR STREAM"
+        binding.btnStream.setBackgroundColor(android.graphics.Color.parseColor("#EF4444"))
         binding.logText.text = "Conectando ao backend..."
         connectWebSocket()
     }
@@ -211,8 +211,8 @@ class MainActivity : AppCompatActivity() {
         streamingJob = null
         webSocket?.close(1000, "User stopped stream")
         webSocket = null
-        binding.btnStream.text = "INICIAR\nSTREAM"
-        binding.btnStream.setBackgroundColor(android.graphics.Color.parseColor("#3b82f6"))
+        binding.btnStream.text = "INICIAR STREAM"
+        binding.btnStream.setBackgroundColor(android.graphics.Color.parseColor("#4F46E5"))
         binding.logText.text = "Stream interrompido pelo usuário."
     }
 
