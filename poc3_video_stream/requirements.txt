@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+websockets
+opencv-python
+pillow
+facenet-pytorch
+numpy
+torch
+av

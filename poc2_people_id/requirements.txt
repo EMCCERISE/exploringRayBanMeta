@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+python-multipart
+requests
+opencv-python
+pillow
+facenet-pytorch
+pyttsx3
