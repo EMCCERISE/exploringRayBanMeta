@@ -2,6 +2,10 @@
 
 Este repositório reúne quatro Provas de Conceito (POCs) desenvolvidas para explorar os recursos, limites e capacidades de integração com os óculos inteligentes **Meta Ray-Ban Smart Glasses** utilizando o **Meta Wearables Device Access Toolkit (DAT) SDK**.
 
+> [!IMPORTANT]
+> **Nota Arquitetural Relevante (Operação NÃO Hands-Free)**:
+> Nenhuma das aplicações desenvolvidas opera de forma totalmente *hands-free*. Como o SDK da Meta (Wearables DAT SDK) e o aplicativo oficial (*Meta View*) não permitem que gatilhos físicos dos óculos (como a chave de foto/gravação na haste) ou comandos de voz nativos (*"Hey Meta"*) acionem aplicações de terceiros não aprovadas/customizadas, **o usuário precisa obrigatoriamente tirar o celular do bolso, abrir o aplicativo customizado e pressionar um botão na tela do smartphone** para disparar qualquer ação (captura de foto, identificação ou streaming).
+
 ---
 
 ## 📌 Visão Geral das POCs
@@ -18,7 +22,7 @@ Este repositório reúne quatro Provas de Conceito (POCs) desenvolvidas para exp
 ## 🎙️ POC 1: Audio & Image Log (`poc1_audio_log`)
 
 ### 1. Descrição
-A **POC 1** é uma solução de registro multimídia (foto + áudio). O aplicativo mexe com a captura simultânea de uma imagem e uma gravação de voz enviadas a um backend remoto. O servidor recebe os arquivos, armazena a imagem, transcreve o áudio em tempo real utilizando o modelo **Faster-Whisper** (`small`) e grava o registro cronológico em um banco de dados SQLite. Além disso, conta com um frontend em React (Vite) para visualização dos registros e um simulador Python para testes sem necessidade do óculos físico.
+A **POC 1** é uma solução de registro multimídia (foto + áudio). O aplicativo executa a captura simultânea de uma imagem e uma gravação de voz enviadas a um backend remoto. O servidor recebe os arquivos, armazena a imagem, transcreve o áudio em tempo real utilizando o modelo **Faster-Whisper** (`small`) e grava o registro cronológico em um banco de dados SQLite. Além disso, conta com um frontend em React (Vite) para visualização dos registros e um simulador Python para testes sem necessidade do óculos físico.
 
 ### 2. Limitações
 - **Processamento Assíncrono/Pontual**: Funciona por requisições de disparo (foto + áudio), não sendo um monitoramento contínuo de áudio ou vídeo.
@@ -26,11 +30,12 @@ A **POC 1** é uma solução de registro multimídia (foto + áudio). O aplicati
 - **Banco de Dados Simplificado**: Utiliza SQLite local, ideal para testes e prototipagem, necessitando migração para PostgreSQL/MySQL em cenários de produção.
 
 ### 3. Potencial de Uso
-- **Diário de Campo Hands-Free**: Ideal para técnicos de manutenção, peritos, inspetores de infraestrutura e médicos em rondas.
+- **Diário de Campo Assistido**: Útil para técnicos de manutenção, peritos, inspetores de infraestrutura e médicos em rondas registrarem fotos e notas de voz associadas.
 - **Evidências Visuais e Audíveis**: Registro imediato de ocorrências acompanhado de anotações por voz transcritas automaticamente.
 - **Acessibilidade e Atas de Reunião**: Registro de notas visuais com contexto falado.
 
 ### 4. Limitações Impostas pelo Kit da Meta (Wearables DAT SDK)
+- **Operação Manual no Celular (Não Hands-Free)**: Devido às restrições do aplicativo oficial Meta View e do SDK, não é possível acionar a captura via botão físico do óculos ou voz ("Hey Meta"). O usuário deve tirar o celular do bolso, abrir o app e tocar no botão de envio.
 - **Modo de Captura Sob Demanda**: O SDK exige acionamento pontual para fotos e gravação de áudio.
 - **Latência de Transferência Bluetooth/Wi-Fi**: Existe um delay natural na transferência dos arquivos de mídia do óculos para o smartphone via SDK antes de serem despachados ao servidor.
 - **Consumo de Bateria**: Transferências frequentes de arquivos de áudio/imagem aumentam o consumo energético dos óculos e do smartphone.
@@ -82,6 +87,7 @@ A **POC 2** realiza a identificação de pessoas no ambiente enviando a foto tir
 - **Eventos e Networking**: Identificação instantânea de contatos ou membros de equipe cadastrados.
 
 ### 4. Limitações Impostas pelo Kit da Meta (Wearables DAT SDK)
+- **Operação Manual no Celular (Não Hands-Free)**: A Meta bloqueia qualquer integração do app oficial com apps externos de terceiros. Para identificar alguém, o usuário deve tirar o celular do bolso, abrir o app e clicar no botão "Identificar".
 - **Captura Discreta por Disparo**: Não suporta stream contínuo de alta resolução para o servidor nesta modalidade; requer que a foto seja tirada a cada requisição de identificação.
 - **Retorno de Áudio**: O áudio precisa ser transmitido de volta ao celular e reproduzido pelos alto-falantes integrados das hastes do Ray-Ban via Bluetooth A2DP.
 
@@ -124,6 +130,7 @@ A **POC 3** explora o streaming de vídeo de baixíssima latência direto da câ
 - **Auditoria Operacional em Linhas de Produção**.
 
 ### 4. Limitações Impostas pelo Kit da Meta (Wearables DAT SDK)
+- **Necessidade de Início Manual no Celular**: O streaming precisa ser iniciado abrindo o aplicativo Android no smartphone e acionando o controle de transmissão.
 - **Restrição de Taxa de Quadros no SDK**: O SDK limita o streaming do vídeo a taxas mais baixas (ex: 2 a 15 fps) para evitar superaquecimento dos óculos.
 - **Throttling Térmico**: O uso contínuo da câmera por muitos minutos aciona os mecanismos de proteção térmica do hardware Ray-Ban Meta, pausando a câmera temporariamente.
 
@@ -165,6 +172,7 @@ A **POC 4** representa o estado da arte em privacidade e autonomia ao realizar o
 - **Assistência Pessoal Contínua**: Autonomia completa para pessoas cegas ou com baixa visão.
 
 ### 4. Limitações Impostas pelo Kit da Meta (Wearables DAT SDK)
+- **Interação Manual Obriga o Uso da Tela do Smartphone (Não Hands-Free)**: Devido à impossibilidade de integração nativa entre o app oficial Meta View e aplicativos de terceiros sem autorização especial da fabricante, o usuário deve tirar o celular do bolso, abrir o aplicativo e apertar o botão "Capturar & Identificar".
 - **Permissões do SDK**: Exige autorização explícita de permissão da câmera (`Permission.CAMERA`) através da API `Wearables.startRegistration`.
 - **Modo de Disparo**: A foto é capturada sob demanda (`stream.capturePhoto()`). Quando a conexão dos óculos é interrompida, o app aciona o modo de fallback com imagens de teste.
 
