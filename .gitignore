@@ -1,0 +1,31 @@
+# Arquivos de Build e Saídas
+*.apk
+*.aab
+*.dex
+*.class
+bin/
+gen/
+out/
+build/
+app/build/
+**/build/
+
+# Caches e Arquivos Temporários
+.gradle/
+.navigation/
+.caches/
+local.properties
+.DS_Store
+
+# Arquivos da IDE (Android Studio / IntelliJ)
+.idea/
+*.iml
+.idea/workspace.xml
+.idea/libraries/
+.idea/modules.xml
+.idea/caches/
+.idea/assetWizardSettings.xml
+
+# Logs e Capturas de Tela
+*.log
+captures/
